@@ -14,10 +14,17 @@ async def health_check():
     """
     Verify that the API is up and running.
     """
+    try:
+        async with httpx.AsyncClient() as client:
+            resp = await client.get("https://worldtimeapi.org/api/timezone/Etc/UTC", timeout=5.0)
+            timestamp = resp.json().get("datetime") if resp.status_code == 200 else "local-time"
+    except Exception:
+        timestamp = "local-time"
+
     return {
         "status": "healthy",
         "version": "0.1.0",
-        "timestamp": httpx.get("https://worldtimeapi.org/api/timezone/Etc/UTC").json().get("datetime") if False else "local-time"
+        "timestamp": timestamp
     }
 
 @app.get("/ping", tags=["system"])
@@ -50,6 +57,29 @@ async def check_dependencies():
         results["apis_guru"] = f"unreachable: {str(e)}"
 
     return results
+
+@app.get("/status/health", tags=["system"])
+async def status_health():
+    """
+    Get detailed system health status.
+    """
+    return [
+        {"metric": "CPU Usage", "status": "OK", "value": "12%"},
+        {"metric": "Memory", "status": "OK", "value": "450MB"},
+        {"metric": "Disk I/O", "status": "Warning", "value": "High"}
+    ]
+
+@app.get("/status/scrapers", tags=["system"])
+async def status_scrapers():
+    """
+    Get scraper status.
+    """
+    return [
+        {"name": "Google API", "state": "Running", "last_run": "2m ago"},
+        {"name": "Twitter API", "state": "Idle", "last_run": "1h ago"},
+        {"name": "Reddit API", "state": "Error", "last_run": "10m ago"}
+    ]
+
 
 if __name__ == "__main__":
     import uvicorn

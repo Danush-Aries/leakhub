@@ -8,8 +8,8 @@ class APIRadarApp(App):
     TITLE = "APIRadar TUI"
     BINDINGS = [
         ("q", "quit", "Quit"),
-        ("/d", "switch_dashboard", "Dashboard"),
-        ("/s", "switch_search", "Search"),
+        ("d", "switch_dashboard", "Dashboard"),
+        ("s", "switch_search", "Search"),
     ]
 
     def on_mount(self) -> None:
