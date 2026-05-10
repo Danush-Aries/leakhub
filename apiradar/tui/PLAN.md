@@ -1,0 +1,13 @@
+# TUI Specialist Plan
+- Textual framework implementation
+- Screens:
+    - Dashboard (Main menu)
+    - Search Screen (Interactive API lookup)
+    - API Details (Endpoint list, documentation)
+    - System Status (Scraper/Verifier health)
+- Keybindings:
+    - /s for Search
+    - /d for Details
+    - q to Quit
+    - Ctrl+R to Refresh
+- Backend Integration via HTTP client
