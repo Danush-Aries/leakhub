@@ -1,194 +1,109 @@
 # LeakHub — APIRadar
 
-![Python](https://img.shields.io/badge/python-3.11%2B-blue?logo=python)
-![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?logo=fastapi)
+**Every public API. Every endpoint. In one searchable index.**
+
+<!-- hero: 1600x600 screenshot of the Textual TUI dashboard with live search -->
+
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?logo=fastapi&logoColor=white)
 ![Textual](https://img.shields.io/badge/TUI-Textual-8A2BE2)
-![License](https://img.shields.io/badge/license-MIT-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-**LeakHub APIRadar** is an intelligence tool for discovering exposed API endpoints across the web. It scrapes public sources — [APIs.guru](https://apis.guru) and GitHub — to catalogue APIs, parse their OpenAPI specs, and index every endpoint they expose. Results are stored in a local SQLite database and browsable through both a REST API and an interactive terminal UI.
-
----
-
-## What It Does
-
-1. **Scrapes** APIs.guru (2,500+ public APIs) and GitHub (OpenAPI/Swagger files) on demand.
-2. **Parses** OpenAPI 2 and 3 specs to extract every path and HTTP method.
-3. **Stores** providers, APIs, and endpoints in a local SQLite database (swappable for PostgreSQL).
-4. **Serves** a FastAPI REST layer with search, pagination, and background scrape triggers.
-5. **Displays** results in a Textual terminal UI with a live search screen and a dashboard showing backend health and scrape source status.
+APIRadar scrapes public API catalogues (APIs.guru, GitHub OpenAPI/Swagger files), parses every spec, and indexes every path and HTTP method into a local SQLite database. Browse it through a FastAPI REST layer or an interactive Textual terminal UI.
 
 ---
 
-## Features
+## Why this exists
 
-- Full FastAPI backend with `/apis`, `/endpoints`, `/providers`, `/scrape/*` routes
-- Background scrape jobs (APIs.guru + GitHub code search)
-- SQLModel ORM with automatic schema creation — no migrations needed to get started
-- Textual TUI: Dashboard screen (backend health, source status) + Search screen (real-time API lookup)
-- Portable config — no hardcoded paths
-- `.env` support via `python-dotenv`
-- Docker-ready (`Dockerfile.backend` + `docker-compose.yml`)
-- Test suite with in-memory SQLite (no external services required)
+If you're doing bug-bounty recon or building an API-aggregator product, the first thing you need is a searchable list of "every REST endpoint the internet publishes". That doesn't exist as a downloadable dataset. APIRadar builds it locally, on demand, from open sources — and gives you both a machine-readable API and a fast keyboard-driven UI to explore it.
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Backend API | FastAPI, Uvicorn |
-| ORM / DB | SQLModel, SQLite (default) |
-| HTTP client | httpx |
-| TUI | Textual |
-| Config | python-dotenv, configparser |
-| Containerisation | Docker, Docker Compose |
-| Tests | pytest, FastAPI TestClient |
-
----
-
-## Installation
-
-### 1. Clone and set up
+## Try it in 60 seconds
 
 ```bash
-git clone https://github.com/your-org/leakhub.git
+git clone https://github.com/Danush-Aries/leakhub
 cd leakhub
-python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-### 2. Configure environment
+# Boot the backend + TUI
+python main.py
 
-```bash
-cp .env.example .env
-# Edit .env — set GITHUB_TOKEN for higher GitHub rate limits (optional)
-```
-
-### 3. Start the backend
-
-```bash
-python main.py backend
-# or:  uvicorn apiradar.backend.app.api.main:app --reload
-```
-
-The API is now live at `http://localhost:8000`. Interactive docs at `http://localhost:8000/docs`.
-
----
-
-## Usage
-
-### Run a scrape
-
-```bash
-# One-shot APIs.guru scrape from the CLI
-python main.py scrape
-
-# Or trigger via the REST API (runs in the background)
+# Trigger a scrape
 curl -X POST http://localhost:8000/scrape/apis-guru
-curl -X POST "http://localhost:8000/scrape/github?query=openapi+swagger"
 ```
 
-### Search APIs
+Or open the Textual UI in a terminal:
 
 ```bash
-# List all indexed APIs
-curl http://localhost:8000/apis
-
-# Search by name/description
-curl "http://localhost:8000/apis?search=stripe&limit=10"
-
-# Get a specific API with its endpoints
-curl http://localhost:8000/apis/1
-
-# Search endpoints by path
-curl "http://localhost:8000/endpoints?path=/payments&method=POST"
-```
-
-### Launch the TUI
-
-```bash
-# Backend must be running first
-python main.py tui
-```
-
-**TUI keybindings:**
-
-| Key | Action |
-|-----|--------|
-| `d` | Switch to Dashboard |
-| `s` | Switch to Search |
-| `Ctrl+R` | Refresh current screen |
-| `Escape` | Go back |
-| `q` | Quit |
-
-### Docker
-
-```bash
-cd apiradar/devops
-docker compose up --build
+python -m apiradar.tui
 ```
 
 ---
 
-## Project Structure
+## How it works
 
 ```
-leakhub/
-├── main.py                         # Root entry point (backend / tui / scrape)
-├── requirements.txt
-├── .env.example
-├── Makefile
-├── tests/
-│   └── test_api.py                 # Pytest integration tests
-└── apiradar/
-    ├── backend/
-    │   └── app/
-    │       ├── api/main.py         # FastAPI application
-    │       ├── db/models.py        # SQLModel schema (API, Endpoint, Provider, DiscoverySource)
-    │       ├── core/database.py    # Engine setup and session factory
-    │       └── scrapers/
-    │           ├── apis_guru.py    # APIs.guru catalogue scraper
-    │           └── github.py       # GitHub code-search scraper
-    ├── tui/
-    │   └── src/
-    │       ├── app.py              # Textual App + keybindings
-    │       └── screens/
-    │           ├── dashboard.py    # Backend health + source status
-    │           └── search_screen.py # Live API search
-    ├── devops/
-    │   ├── Dockerfile.backend
-    │   └── docker-compose.yml
-    ├── shared/
-    │   └── types.py                # Shared dataclasses
-    └── project_config.ini
++-- Scrape sources --------------+
+|  apis.guru (2500+ public APIs) |
+|  GitHub code search (openapi)  |
++--------------|-----------------+
+               v
++-- OpenAPI parser --------------+
+|  OpenAPI 2 + 3                 |
+|  extracts path + method + tags |
++--------------|-----------------+
+               v
++-- SQLModel storage ------------+
+|  providers / apis / endpoints  |
+|  SQLite (portable) or Postgres |
++--------------|-----------------+
+               v
++-- FastAPI REST + Textual TUI --+
+|  /apis  /endpoints  /providers |
+|  live search screen            |
+|  dashboard: source health      |
++--------------------------------+
 ```
+
+Background scrape jobs. Docker-ready. Portable — no hardcoded paths.
 
 ---
 
-## Running Tests
+## Screenshots
 
-```bash
-pytest tests/ -v
-# or via Make
-make test
-```
-
-Tests use an in-memory SQLite database — no running server or network access required.
+<!-- screenshot: tui-dashboard.png -->
+<!-- screenshot: tui-search.png -->
+<!-- screenshot: api-response.png -->
 
 ---
 
-## Environment Variables
+## Stack
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE_URL` | `sqlite:///./leakhub.db` | SQLAlchemy database URL |
-| `GITHUB_TOKEN` | _(empty)_ | GitHub PAT — raises rate limit from 10 to 30 req/min |
-| `BACKEND_HOST` | `0.0.0.0` | Uvicorn bind address |
-| `BACKEND_PORT` | `8000` | Uvicorn port |
+| Layer | Tech |
+|---|---|
+| API | FastAPI + Uvicorn |
+| ORM | SQLModel (SQLite default, Postgres-ready) |
+| TUI | Textual |
+| Config | python-dotenv |
+| Deploy | Dockerfile + docker-compose |
+| Sources | APIs.guru + GitHub code search |
 
 ---
+
+## More from Danush
+
+Part of a broader stack of AI + security tooling:
+
+- [jarvis](https://github.com/Danush-Aries/jarvis) — portable multi-provider AI assistant (voice/web/CLI)
+- [breachintel](https://github.com/Danush-Aries/breachintel) — OSINT breach intelligence aggregator
+- [cve-advisor](https://github.com/Danush-Aries/cve-advisor) — AI-powered CVE triage and patch recommendation
+- [llm-fragility-lab](https://github.com/Danush-Aries/llm-fragility-lab) — adversarial testing lab for LLM robustness
+- [network-intrusion-analyzer](https://github.com/Danush-Aries/network-intrusion-analyzer) — Suricata + Claude AI intrusion triage
+- [autonomous-coding-agent](https://github.com/Danush-Aries/autonomous-coding-agent) — two-agent autonomous coding system
+
+Built by [Dhanush](https://github.com/Danush-Aries) — AI engineering + cybersecurity.
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT.
