@@ -2,8 +2,6 @@
 
 **Every public API. Every endpoint. In one searchable index.**
 
-<!-- hero: 1600x600 screenshot of the Textual TUI dashboard with live search -->
-
 ![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?logo=python&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.111-009688?logo=fastapi&logoColor=white)
 ![Textual](https://img.shields.io/badge/TUI-Textual-8A2BE2)
@@ -26,18 +24,25 @@ git clone https://github.com/Danush-Aries/leakhub
 cd leakhub
 pip install -r requirements.txt
 
-# Boot the backend + TUI
-python main.py
+cp .env.example .env     # optional: set GITHUB_TOKEN for GitHub search
 
-# Trigger a scrape
+# Start the FastAPI backend on :8000 (API docs at /docs)
+python main.py backend
+
+# In another terminal: trigger a scrape of APIs.guru
 curl -X POST http://localhost:8000/scrape/apis-guru
+
+# Browse results: REST endpoints /apis, /endpoints, /providers ...
+curl http://localhost:8000/apis
 ```
 
 Or open the Textual UI in a terminal:
 
 ```bash
-python -m apiradar.tui
+python main.py tui
 ```
+
+Other commands: `python main.py scrape` (one-shot APIs.guru scrape), `make test`.
 
 ---
 
@@ -61,20 +66,13 @@ python -m apiradar.tui
                v
 +-- FastAPI REST + Textual TUI --+
 |  /apis  /endpoints  /providers |
+|  /scrape/apis-guru /scrape/github |
 |  live search screen            |
 |  dashboard: source health      |
 +--------------------------------+
 ```
 
-Background scrape jobs. Docker-ready. Portable — no hardcoded paths.
-
----
-
-## Screenshots
-
-<!-- screenshot: tui-dashboard.png -->
-<!-- screenshot: tui-search.png -->
-<!-- screenshot: api-response.png -->
+Docker files are under `apiradar/devops/`.
 
 ---
 
@@ -106,4 +104,4 @@ Built by [Dhanush](https://github.com/Danush-Aries) — AI engineering + cyberse
 
 ## License
 
-MIT.
+MIT — see [LICENSE](LICENSE).
